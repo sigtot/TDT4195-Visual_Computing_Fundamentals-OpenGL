@@ -52,11 +52,8 @@ void runProgram(GLFWwindow* window)
     shader.makeBasicShader("/home/sigtot/Developer/visdat/ovs/ov1/gloom/gloom/shaders/simple.vert",
                            "/home/sigtot/Developer/visdat/ovs/ov1/gloom/gloom/shaders/simple.frag");
     std::vector<float> triangleCoords {
-        0.0866, 0.3, 0.0, -0.0866, 0.3, 0.0, 0.0, 0.2, 0.0,
-        0.3, -0.0866, 0.0, 0.3, 0.0866, 0.0, 0.2, 0.0, 0.0,
-        -0.0866, -0.3, 0.0, 0.0866, -0.3, 0.0, 0.0, -0.2, 0.0,
-        -0.3, 0.0866, 0.0, -0.3, -0.0866, 0.0, -0.2, 0.0, 0.0,
-        -0.0866, -0.05, 0.0, 0.0866, -0.05, 0.0, 0.0, 0.05, 0.0,
+        -0.1, 0.0, 0.0, -0.1, 0.5, 0.0, -0.7, 0.0, 0.0,
+        0.7, 0.0, 0.0, 0.7, 0.5, 0.0, 0.1, 0.0, 0.0,
     };
 
     std::vector<unsigned int> indices;
