@@ -1,2 +1,3 @@
-[Bb]uild/*
+build/*
+cmake-build-debug
 !*/.gitkeep
