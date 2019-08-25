@@ -38,9 +38,9 @@ void runProgram(GLFWwindow* window)
 {
     // Enable depth (Z) buffer (GL_LESS = accept "closest" fragment)
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthFunc(GL_LESS); // This is the default: Can be removed
 
-    // Configure miscellaneous OpenGL settings
+    // Enable face culling
     glEnable(GL_CULL_FACE);
 
     // Set default colour after clearing the colour buffer
