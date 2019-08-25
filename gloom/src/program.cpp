@@ -36,7 +36,7 @@ unsigned int createVAO(std::vector<float> vertices, std::vector<unsigned int> in
 
 void runProgram(GLFWwindow* window)
 {
-    // Enable depth (Z) buffer (accept "closest" fragment)
+    // Enable depth (Z) buffer (GL_LESS = accept "closest" fragment)
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
@@ -60,7 +60,7 @@ void runProgram(GLFWwindow* window)
     };
 
     std::vector<unsigned int> indices;
-    for (unsigned long i = 0; i < triangleCoords.size(); ++i) indices.push_back(i);
+    for (unsigned long i = 0; i * NUM_COORDINATES < triangleCoords.size(); ++i) indices.push_back(i);
 
     unsigned int numPoints = triangleCoords.size() / NUM_COORDINATES;
     unsigned int VAO = createVAO(triangleCoords, indices, numPoints);
