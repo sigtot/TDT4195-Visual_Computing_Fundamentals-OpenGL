@@ -44,7 +44,7 @@ void runProgram(GLFWwindow* window)
     glEnable(GL_CULL_FACE);
 
     // Set default colour after clearing the colour buffer
-    glClearColor(0.4f, 0.2f, 0.2f, 1.0f);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
     // Set up scene
     Gloom::Shader shader;
