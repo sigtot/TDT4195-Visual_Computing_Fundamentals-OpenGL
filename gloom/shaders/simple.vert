@@ -4,5 +4,6 @@ in vec3 position;
 
 void main()
 {
-    gl_Position = vec4(position, 1.0f);
+    vec3 mirror_position = vec3(-position.x, -position.y, position.z);
+    gl_Position = vec4(mirror_position, 1.0f);
 }
