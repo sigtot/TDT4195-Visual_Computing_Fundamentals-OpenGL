@@ -1,6 +1,8 @@
 // Local headers
 #include <gloom/shader.hpp>
 #include <vector>
+#include <cmath>
+#include <algorithm>
 #include "program.hpp"
 #include "gloom/gloom.hpp"
 
@@ -34,6 +36,55 @@ unsigned int createVAO(std::vector<float> vertices, std::vector<unsigned int> in
     return VAO;
 }
 
+std::vector<float> calcOutputs(const std::vector<float> &inputs, float (*func)(float))
+{
+    std::vector<float> outputs;
+    outputs.reserve(inputs.size());
+    for (float val : inputs) {
+        outputs.push_back((float)func(val));
+    }
+    return outputs;
+}
+
+std::vector<float> calcCoordsXY(const std::vector<float> &funcInputs, float (*func)(float))
+{
+    std::vector<float> funcOutputs = calcOutputs(funcInputs, func);
+    std::vector<float> vertices;
+    for (unsigned long i = 0; i < funcInputs.size(); i++) {
+        vertices.push_back(funcInputs[i]);
+        vertices.push_back(funcOutputs[i]);
+        vertices.push_back(0.0f);
+    }
+    return vertices;
+}
+
+float upperHalfCircle(float x)
+{
+    return static_cast<float>(sqrt(0.25 - x*x));
+}
+
+float lowerHalfCircle(float x)
+{
+    return static_cast<float>(-sqrt(0.25 - x*x));
+}
+
+float squishySine(float x)
+{
+    return static_cast<float>(std::sin(6*x));
+}
+
+template <typename T>
+std::vector<T> concatVectors(std::vector<T> A, std::vector<T> B)
+{
+    std::vector<T> AB;
+    AB.reserve( A.size() + B.size() );
+    AB.insert( AB.end(), A.begin(), A.end() );
+    AB.insert( AB.end(), B.begin(), B.end() );
+    return AB;
+}
+
+
+
 void runProgram(GLFWwindow* window)
 {
     // Enable depth (Z) buffer (GL_LESS = accept "closest" fragment)
@@ -51,16 +102,37 @@ void runProgram(GLFWwindow* window)
     // Fix these dumb paths some time
     shader.makeBasicShader("/home/sigtot/Developer/visdat/ovs/ov1/gloom/gloom/shaders/simple.vert",
                            "/home/sigtot/Developer/visdat/ovs/ov1/gloom/gloom/shaders/simple.frag");
+
+    std::vector<float> inputs;
+    for(float x = -0.5; x <= 0.50; x += 0.01) {
+        inputs.push_back(x);
+    }
+
+    std::vector<float> lowerHalfCircleCoords = calcCoordsXY(inputs, lowerHalfCircle);
+    std::reverse(inputs.begin(), inputs.end());
+    std::vector<float> upperHalfCircleCoords = calcCoordsXY(inputs, upperHalfCircle);
+    std::reverse(inputs.begin(), inputs.end());
+    std::vector<float> circleCoords = concatVectors(upperHalfCircleCoords, lowerHalfCircleCoords);
+    std::vector<unsigned int> circleIndices;
+    for (unsigned long i = 0; i * NUM_COORDINATES < circleCoords.size(); ++i) circleIndices.push_back(i);
+    unsigned int numCirclePoints = circleCoords.size() / NUM_COORDINATES;
+    unsigned int circleVAO = createVAO(circleCoords, circleIndices, numCirclePoints);
+
+    std::vector<float> sineCoords = calcCoordsXY(inputs, squishySine);
+    std::vector<unsigned int> sineIndices;
+    for (unsigned long i = 0; i * NUM_COORDINATES < sineCoords.size(); ++i) sineIndices.push_back(i);
+    unsigned int numSinePoints = circleCoords.size() / NUM_COORDINATES;
+    unsigned int sineVAO = createVAO(sineCoords, sineIndices, numSinePoints);
+
     std::vector<float> triangleCoords {
-        -0.1, 0.0, 0.0, -0.1, 0.5, 0.0, -0.7, 0.0, 0.0,
-        0.7, 0.0, 0.0, 0.7, 0.5, 0.0, 0.1, 0.0, 0.0,
+            -0.1, 0.0, 0.0, -0.1, 0.5, 0.0, -0.7, 0.0, 0.0,
+            0.7, 0.0, 0.0, 0.7, 0.5, 0.0, 0.1, 0.0, 0.0,
     };
 
-    std::vector<unsigned int> indices;
-    for (unsigned long i = 0; i * NUM_COORDINATES < triangleCoords.size(); ++i) indices.push_back(i);
-
-    unsigned int numPoints = triangleCoords.size() / NUM_COORDINATES;
-    unsigned int VAO = createVAO(triangleCoords, indices, numPoints);
+    std::vector<unsigned int> triangleIndices;
+    for (unsigned long i = 0; i * NUM_COORDINATES < triangleCoords.size(); ++i) triangleIndices.push_back(i);
+    unsigned int numTrianglePoints = triangleCoords.size() / NUM_COORDINATES;
+    unsigned int triangleVAO = createVAO(triangleCoords, triangleIndices, numTrianglePoints);
 
     glPointSize(5.0f);
     glLineWidth(5.0f);
@@ -70,9 +142,16 @@ void runProgram(GLFWwindow* window)
         // Clear colour and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glBindVertexArray(VAO);
         shader.activate();
-        glDrawElements(GL_TRIANGLES, numPoints, GL_UNSIGNED_INT, nullptr);
+        glBindVertexArray(triangleVAO);
+        glDrawElements(GL_TRIANGLES, numTrianglePoints, GL_UNSIGNED_INT, nullptr);
+
+        glBindVertexArray(sineVAO);
+        glDrawElements(GL_LINE_STRIP, numSinePoints, GL_UNSIGNED_INT, nullptr);
+
+        glBindVertexArray(circleVAO);
+        glDrawElements(GL_TRIANGLE_FAN, numCirclePoints, GL_UNSIGNED_INT, nullptr);
+
         shader.deactivate();
         printGLError();
 

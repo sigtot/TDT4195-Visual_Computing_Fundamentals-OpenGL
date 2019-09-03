@@ -1,5 +1,6 @@
 #version 450 core
 #define CHECKER_SIZE 30
+#define WINDOW_WIDTH 768
 
 in vec4 gl_FragCoord;
 out vec4 color;
@@ -20,7 +21,7 @@ vec3 checker(vec2 xy)
 
 void main()
 {
-    //vec3 rgb = hsv2rgb(vec3(gl_FragCoord.x / 1000, 1, 1));
-    vec3 rgb = checker(vec2(gl_FragCoord.x, gl_FragCoord.y));
+    vec3 rgb = hsv2rgb(vec3(gl_FragCoord.x / WINDOW_WIDTH, 1, 1));
+    //vec3 rgb = checker(vec2(gl_FragCoord.x, gl_FragCoord.y));
     color = vec4(rgb, 1.0f);
 }
