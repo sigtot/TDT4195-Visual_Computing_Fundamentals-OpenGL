@@ -2,7 +2,6 @@
 #include <gloom/shader.hpp>
 #include <vector>
 #include <cmath>
-#include <algorithm>
 #include "program.hpp"
 #include "gloom/gloom.hpp"
 
@@ -102,28 +101,6 @@ void runProgram(GLFWwindow* window)
     // Fix these dumb paths some time
     shader.makeBasicShader("/home/sigtot/Developer/visdat/ovs/ov1/gloom/gloom/shaders/simple.vert",
                            "/home/sigtot/Developer/visdat/ovs/ov1/gloom/gloom/shaders/simple.frag");
-
-    std::vector<float> inputs;
-    for(float x = -0.5; x <= 0.50; x += 0.01) {
-        inputs.push_back(x);
-    }
-
-    std::vector<float> lowerHalfCircleCoords = calcCoordsXY(inputs, lowerHalfCircle);
-    std::reverse(inputs.begin(), inputs.end());
-    std::vector<float> upperHalfCircleCoords = calcCoordsXY(inputs, upperHalfCircle);
-    std::reverse(inputs.begin(), inputs.end());
-    std::vector<float> circleCoords = concatVectors(upperHalfCircleCoords, lowerHalfCircleCoords);
-    std::vector<unsigned int> circleIndices;
-    for (unsigned long i = 0; i * NUM_COORDINATES < circleCoords.size(); ++i) circleIndices.push_back(i);
-    unsigned int numCirclePoints = circleCoords.size() / NUM_COORDINATES;
-    unsigned int circleVAO = createVAO(circleCoords, circleIndices, numCirclePoints);
-
-    std::vector<float> sineCoords = calcCoordsXY(inputs, squishySine);
-    std::vector<unsigned int> sineIndices;
-    for (unsigned long i = 0; i * NUM_COORDINATES < sineCoords.size(); ++i) sineIndices.push_back(i);
-    unsigned int numSinePoints = circleCoords.size() / NUM_COORDINATES;
-    unsigned int sineVAO = createVAO(sineCoords, sineIndices, numSinePoints);
-
     std::vector<float> triangleCoords {
             -0.1, 0.0, 0.0, -0.1, 0.5, 0.0, -0.7, 0.0, 0.0,
             0.7, 0.0, 0.0, 0.7, 0.5, 0.0, 0.1, 0.0, 0.0,
@@ -145,12 +122,6 @@ void runProgram(GLFWwindow* window)
         shader.activate();
         glBindVertexArray(triangleVAO);
         glDrawElements(GL_TRIANGLES, numTrianglePoints, GL_UNSIGNED_INT, nullptr);
-
-        glBindVertexArray(sineVAO);
-        glDrawElements(GL_LINE_STRIP, numSinePoints, GL_UNSIGNED_INT, nullptr);
-
-        glBindVertexArray(circleVAO);
-        glDrawElements(GL_TRIANGLE_FAN, numCirclePoints, GL_UNSIGNED_INT, nullptr);
 
         shader.deactivate();
         printGLError();
