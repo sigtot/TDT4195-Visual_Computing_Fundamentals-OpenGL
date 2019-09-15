@@ -6,27 +6,35 @@
 #include "gloom/gloom.hpp"
 
 #define NUM_COORDINATES 3
+#define NUM_COLOR_COORDINATES 4
 
-unsigned int createVAO(std::vector<float> vertices, std::vector<unsigned int> indices, unsigned int numPoints)
+unsigned int createVAO(std::vector<float> vertices, std::vector<unsigned int> indices, std::vector<float> colors, unsigned int numPoints)
 {
     unsigned int VAO = 0;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
-    unsigned int VBO = 0;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    int num_vbos = 2;
+    unsigned int VBO[2];
+    unsigned int vertexIndex = 0;
+    unsigned int colorIndex = 1;
+    glGenBuffers(num_vbos, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[vertexIndex]);
     glBufferData(GL_ARRAY_BUFFER, NUM_COORDINATES * numPoints * sizeof(float), &vertices[0], GL_STATIC_DRAW);
 
     glVertexAttribPointer(
-            0,
+            vertexIndex,
             NUM_COORDINATES,
             GL_FLOAT,
-            false,
-            12,
+            GL_FALSE,
+            0,
             nullptr);
-    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(vertexIndex);
 
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[colorIndex]);
+    glBufferData(GL_ARRAY_BUFFER, NUM_COLOR_COORDINATES * numPoints * sizeof(float), &colors[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(colorIndex, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glEnableVertexAttribArray(colorIndex);
     // IBO
     unsigned int IBO = 0;
     glGenBuffers(1, &IBO );
@@ -94,7 +102,11 @@ void runProgram(GLFWwindow* window)
     glEnable(GL_CULL_FACE);
 
     // Set default colour after clearing the colour buffer
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    // Enable transparency
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Set up scene
     Gloom::Shader shader;
@@ -102,14 +114,60 @@ void runProgram(GLFWwindow* window)
     shader.makeBasicShader("../gloom/shaders/simple.vert",
                            "../gloom/shaders/simple.frag");
     std::vector<float> triangleCoords {
-            -0.1, 0.0, 0.0, -0.1, 0.5, 0.0, -0.7, 0.0, 0.0,
-            0.7, 0.0, 0.0, 0.7, 0.5, 0.0, 0.1, 0.0, 0.0,
+        -0.4, 0.05, 0.0,
+        -0.4, 0.5, 0.0,
+        -0.9, 0.05, 0.0,
+
+        0.8, 0.05, 0.0,
+        0.8, 0.5, 0.0,
+        0.3, 0.05, 0.0,
+
+        0.2, 0.05, 0.0,
+        0.2, 0.5, 0.0,
+        -0.3, 0.05, 0.0,
+
+        -0.4, -0.5, 0.0,
+        -0.4, -0.05, 0.0,
+        -0.9, -0.05, 0.0,
+
+        0.8, -0.5, 0.0,
+        0.8, -0.05, 0.0,
+        0.3, -0.05, 0.0,
+
+        0.2, -0.5, 0.0,
+        0.2, -0.05, 0.0,
+        -0.3, -0.05, 0.0,
     };
 
+    std::vector<float> triangleColors {
+            0.1, 0.1, 0.1, 0.7, // Black
+            0.9, 0.1, 0.3, 0.7, // Red
+            0.1, 0.1, 0.1, 0.7, // Black
+
+            0.1, 0.1, 0.1, 0.7, // Black
+            0.1, 0.8, 0.0, 0.7, // Green
+            0.1, 0.1, 0.1, 0.7, // Black
+
+            0.1, 0.1, 0.1, 0.7, // Black
+            0.1, 0.1, 0.9, 0.7, // Blue
+            0.1, 0.1, 0.1, 0.7, // Black
+
+            0.9, 0.1, 0.9, 0.7, // Magenta
+            0.1, 0.1, 0.1, 0.7, // Black
+            0.1, 0.1, 0.1, 0.7, // Black
+
+            0.7, 0.8, 0.0, 0.7, // Yellow
+            0.1, 0.1, 0.1, 0.7, // Black
+            0.1, 0.1, 0.1, 0.7, // Black
+
+            0.1, 0.8, 0.8, 0.7, // Cyan
+            0.1, 0.1, 0.1, 0.7, // Black
+            0.1, 0.1, 0.1, 0.7, // Black
+    };
     std::vector<unsigned int> triangleIndices;
     for (unsigned long i = 0; i * NUM_COORDINATES < triangleCoords.size(); ++i) triangleIndices.push_back(i);
     unsigned int numTrianglePoints = triangleCoords.size() / NUM_COORDINATES;
-    unsigned int triangleVAO = createVAO(triangleCoords, triangleIndices, numTrianglePoints);
+    unsigned int triangleVAO = createVAO(triangleCoords, triangleIndices, triangleColors, numTrianglePoints);
 
     glPointSize(5.0f);
     glLineWidth(5.0f);
