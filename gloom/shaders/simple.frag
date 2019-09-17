@@ -1,6 +1,4 @@
 #version 450 core
-#define CHECKER_SIZE 30
-#define WINDOW_WIDTH 768
 
 in vec4 ex_color;
 out vec4 color;
