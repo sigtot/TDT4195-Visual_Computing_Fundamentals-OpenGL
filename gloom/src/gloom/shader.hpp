@@ -115,6 +115,11 @@ namespace Gloom
             return true;
         }
 
+        GLint getUniformLocation(const GLchar* name)
+        {
+            return glGetUniformLocation(mProgram, name);
+        }
+
 
         /* Helper function for creating shaders */
         GLuint create(std::string const &filename)

@@ -147,13 +147,22 @@ void runProgram(GLFWwindow* window)
 
     glPointSize(5.0f);
     glLineWidth(5.0f);
+
+    int frameNum = 0;
+    GLint uniformLoc = shader.getUniformLocation("frame_num");
+    if (uniformLoc == -1) {
+        throw std::runtime_error("Could not find uniform location");
+    }
+
     // Rendering Loop
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
         // Clear colour and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shader.activate();
+
+        glUniform1i(uniformLoc, frameNum);
+
         glBindVertexArray(triangleVAO);
         glDrawElements(GL_TRIANGLES, numTrianglePoints, GL_UNSIGNED_INT, nullptr);
 
@@ -166,6 +175,7 @@ void runProgram(GLFWwindow* window)
 
         // Flip buffers
         glfwSwapBuffers(window);
+        frameNum++;
     }
     shader.destroy();
 }
