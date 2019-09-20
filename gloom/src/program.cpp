@@ -1,7 +1,6 @@
 // Local headers
 #include <gloom/shader.hpp>
 #include <vector>
-#include <cmath>
 #include "program.hpp"
 #include "gloom/gloom.hpp"
 
@@ -42,55 +41,6 @@ unsigned int createVAO(std::vector<float> vertices, std::vector<unsigned int> in
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, numPoints * NUM_COORDINATES * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
     return VAO;
 }
-
-std::vector<float> calcOutputs(const std::vector<float> &inputs, float (*func)(float))
-{
-    std::vector<float> outputs;
-    outputs.reserve(inputs.size());
-    for (float val : inputs) {
-        outputs.push_back((float)func(val));
-    }
-    return outputs;
-}
-
-std::vector<float> calcCoordsXY(const std::vector<float> &funcInputs, float (*func)(float))
-{
-    std::vector<float> funcOutputs = calcOutputs(funcInputs, func);
-    std::vector<float> vertices;
-    for (unsigned long i = 0; i < funcInputs.size(); i++) {
-        vertices.push_back(funcInputs[i]);
-        vertices.push_back(funcOutputs[i]);
-        vertices.push_back(0.0f);
-    }
-    return vertices;
-}
-
-float upperHalfCircle(float x)
-{
-    return static_cast<float>(sqrt(0.25 - x*x));
-}
-
-float lowerHalfCircle(float x)
-{
-    return static_cast<float>(-sqrt(0.25 - x*x));
-}
-
-float squishySine(float x)
-{
-    return static_cast<float>(std::sin(6*x));
-}
-
-template <typename T>
-std::vector<T> concatVectors(std::vector<T> A, std::vector<T> B)
-{
-    std::vector<T> AB;
-    AB.reserve( A.size() + B.size() );
-    AB.insert( AB.end(), A.begin(), A.end() );
-    AB.insert( AB.end(), B.begin(), B.end() );
-    return AB;
-}
-
-
 
 void runProgram(GLFWwindow* window)
 {
@@ -179,7 +129,6 @@ void runProgram(GLFWwindow* window)
     }
     shader.destroy();
 }
-
 
 void handleKeyboardInput(GLFWwindow* window)
 {
