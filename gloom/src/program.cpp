@@ -3,9 +3,17 @@
 #include <vector>
 #include "program.hpp"
 #include "gloom/gloom.hpp"
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/vec3.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 
 #define NUM_COORDINATES 3
 #define NUM_COLOR_COORDINATES 4
+#define FOV 90.0f
+#define ASPECT_RATIO (16.0f/9.0f)
 
 unsigned int createVAO(std::vector<float> vertices, std::vector<unsigned int> indices, std::vector<float> colors, unsigned int numPoints)
 {
@@ -64,17 +72,17 @@ void runProgram(GLFWwindow* window)
     shader.makeBasicShader("../gloom/shaders/simple.vert",
                            "../gloom/shaders/simple.frag");
     std::vector<float> triangleCoords {
-        0.1, -0.1, 0.2,
-        0.1, 0.4, 0.2,
-        -0.4, -0.1, 0.2,
+        0.1, -0.1, -4.0,
+        0.1, 0.4, -4.0,
+        -0.4, -0.1, -4.0,
 
-        0.2, -0.2, 0.1,
-        0.2, 0.3, 0.1,
-        -0.3, -0.2, 0.1,
+        0.2, -0.2, -3.0,
+        0.2, 0.3, -3.0,
+        -0.3, -0.2, -3.0,
 
-        0.3, -0.3, 0.0,
-        0.3, 0.2, 0.0,
-        -0.2, -0.3, 0.0,
+        0.3, -0.3, -2.0,
+        0.3, 0.2, -2.0,
+        -0.2, -0.3, -2.0,
     };
 
     std::vector<float> triangleColors {
@@ -99,7 +107,7 @@ void runProgram(GLFWwindow* window)
     glLineWidth(5.0f);
 
     int frameNum = 0;
-    GLint uniformLoc = shader.getUniformLocation("frame_num");
+    GLint uniformLoc = shader.getUniformLocation("t_mat");
     if (uniformLoc == -1) {
         throw std::runtime_error("Could not find uniform location");
     }
@@ -109,9 +117,13 @@ void runProgram(GLFWwindow* window)
         // Clear colour and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glm::mat4 rotateX = glm::rotate(glm::mat4(1.0f), glm::radians(static_cast<float>(frameNum % 360)), glm::vec3(1.0f, 0.0f, 0.0f));
+        glm::mat4 rotateY = glm::rotate(glm::mat4(1.0f), glm::radians(static_cast<float>(frameNum % 360)), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 perspective = glm::perspective(glm::radians(FOV), ASPECT_RATIO, 1.0f, 100.0f);
+        glm::mat4 t_mat = rotateX * rotateY * perspective;
         shader.activate();
 
-        glUniform1i(uniformLoc, frameNum);
+        glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, glm::value_ptr(t_mat));
 
         glBindVertexArray(triangleVAO);
         glDrawElements(GL_TRIANGLES, numTrianglePoints, GL_UNSIGNED_INT, nullptr);
