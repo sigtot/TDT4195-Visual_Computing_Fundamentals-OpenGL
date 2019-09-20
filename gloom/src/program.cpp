@@ -125,12 +125,11 @@ void runProgram(GLFWwindow* window)
         glm::mat4 rotateZ = glm::rotate(cam.psi, glm::vec3(0.0f, 0.0f, 1.0f)); // Rotation around z
 
         glm::mat4 transform = rotateX * rotateY * rotateZ * translate;
-        glm::mat4x4 transposedTrans = glm::transpose(transform);
         glm::mat4 perspective = glm::perspective(glm::radians(FOV), ASPECT_RATIO, 1.0f, 100.0f);
-        glm::mat4 t_mat = transposedTrans * perspective;
+        glm::mat4 t_mat = perspective * transform;
         shader.activate();
 
-        glUniformMatrix4fv(uniformLoc, 1, GL_TRUE, glm::value_ptr(t_mat));
+        glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, glm::value_ptr(t_mat));
 
         glBindVertexArray(triangleVAO);
         glDrawElements(GL_TRIANGLES, numTrianglePoints, GL_UNSIGNED_INT, nullptr);
