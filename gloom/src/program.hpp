@@ -9,6 +9,15 @@
 #include <string>
 
 
+typedef struct Camera {
+    float x;
+    float y;
+    float z;
+    float phi;
+    float theta;
+    float psi;
+} Camera;
+
 // Main OpenGL program
 void runProgram(GLFWwindow* window);
 

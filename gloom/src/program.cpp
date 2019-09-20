@@ -15,6 +15,7 @@
 #define FOV 90.0f
 #define ASPECT_RATIO (16.0f/9.0f)
 
+
 unsigned int createVAO(std::vector<float> vertices, std::vector<unsigned int> indices, std::vector<float> colors, unsigned int numPoints)
 {
     unsigned int VAO = 0;
