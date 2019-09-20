@@ -1,4 +1,5 @@
 // Local headers
+#include <cmath>
 #include <gloom/shader.hpp>
 #include <vector>
 #include "program.hpp"
@@ -13,8 +14,7 @@
 #define FOV 40.0f
 #define ASPECT_RATIO (16.0f/9.0f)
 #define TRANS_SPEED 0.05f
-#define ROT_SPEED 0.05f
-
+#define ROT_SPEED 0.03f
 
 unsigned int createVAO(std::vector<float> vertices, std::vector<unsigned int> indices, std::vector<float> colors, unsigned int numPoints)
 {
@@ -158,22 +158,26 @@ void handleKeyboardInput(GLFWwindow* window, Camera &cam)
 
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     {
-        cam.x += TRANS_SPEED;
+        cam.x += std::cos(cam.phi) * TRANS_SPEED;
+        cam.z += std::sin(cam.phi) * TRANS_SPEED;
     }
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     {
-        cam.x -= TRANS_SPEED;
+        cam.x -= std::cos(cam.phi) * TRANS_SPEED;
+        cam.z -= std::sin(cam.phi) * TRANS_SPEED;
     }
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
-        cam.z += TRANS_SPEED;
+        cam.x -= std::sin(cam.phi) * TRANS_SPEED;
+        cam.z += std::cos(cam.phi) * TRANS_SPEED;
     }
 
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
     {
-        cam.z -= TRANS_SPEED;
+        cam.x += std::sin(cam.phi) * TRANS_SPEED;
+        cam.z -= std::cos(cam.phi) * TRANS_SPEED;
     }
 
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
