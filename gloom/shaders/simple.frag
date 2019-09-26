@@ -14,5 +14,5 @@ vec3 hsv2rgb(vec3 c)
 
 void main()
 {
-    color = ex_color;
+    color = vec4(ex_normal, 1.0f);
 }
