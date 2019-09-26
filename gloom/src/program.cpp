@@ -15,7 +15,7 @@
 #define NUM_COLOR_COORDINATES 4
 #define FOV 40.0f
 #define ASPECT_RATIO (16.0f/9.0f)
-#define TRANS_SPEED 5.0f
+#define TRANS_SPEED 1.0f
 #define ROT_SPEED 0.03f
 
 #define Z_FAR_PLANE 10000.0f
@@ -94,6 +94,36 @@ void runProgram(GLFWwindow* window)
             lunarSurface.colours,
             lunarSurface.normals,
             lunarSurface.vertexCount());
+
+    Helicopter heli = loadHelicopterModel("../gloom/src/resources/helicopter.obj");
+    unsigned int bodyVAO = createVAO(
+            heli.body.vertices,
+            heli.body.indices,
+            heli.body.colours,
+            heli.body.normals,
+            heli.body.vertexCount());
+
+    unsigned int mainRotorVAO = createVAO(
+            heli.mainRotor.vertices,
+            heli.mainRotor.indices,
+            heli.mainRotor.colours,
+            heli.mainRotor.normals,
+            heli.mainRotor.vertexCount());
+
+    unsigned int tailRotorVAO = createVAO(
+            heli.tailRotor.vertices,
+            heli.tailRotor.indices,
+            heli.tailRotor.colours,
+            heli.tailRotor.normals,
+            heli.tailRotor.vertexCount());
+
+    unsigned int doorVAO = createVAO(
+            heli.door.vertices,
+            heli.door.indices,
+            heli.door.colours,
+            heli.door.normals,
+            heli.door.vertexCount());
+
     glPointSize(5.0f);
     glLineWidth(5.0f);
 
@@ -123,6 +153,18 @@ void runProgram(GLFWwindow* window)
 
         glBindVertexArray(surfaceVAO);
         glDrawElements(GL_TRIANGLES, lunarSurface.vertexCount(), GL_UNSIGNED_INT, nullptr);
+
+        glDrawElements(GL_TRIANGLES, heli.body.vertexCount(), GL_UNSIGNED_INT, nullptr);
+        glBindVertexArray(bodyVAO);
+
+        glDrawElements(GL_TRIANGLES, heli.mainRotor.vertexCount(), GL_UNSIGNED_INT, nullptr);
+        glBindVertexArray(mainRotorVAO);
+
+        glDrawElements(GL_TRIANGLES, heli.tailRotor.vertexCount(), GL_UNSIGNED_INT, nullptr);
+        glBindVertexArray(tailRotorVAO);
+
+        glDrawElements(GL_TRIANGLES, heli.door.vertexCount(), GL_UNSIGNED_INT, nullptr);
+        glBindVertexArray(doorVAO);
 
         shader.deactivate();
         printGLError();
