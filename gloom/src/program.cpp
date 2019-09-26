@@ -7,6 +7,8 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
+#include "lib/mesh.hpp"
+#include "lib/OBJLoader.hpp"
 
 
 #define NUM_COORDINATES 3
@@ -61,7 +63,7 @@ void runProgram(GLFWwindow* window)
     glEnable(GL_CULL_FACE);
 
     // Set default colour after clearing the colour buffer
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     // Enable transparency
     glEnable(GL_BLEND);
@@ -72,38 +74,13 @@ void runProgram(GLFWwindow* window)
     // Fix these dumb paths some time
     shader.makeBasicShader("../gloom/shaders/simple.vert",
                            "../gloom/shaders/simple.frag");
-    std::vector<float> triangleCoords {
-        0.1, -0.7, -4.0,
-        0.1, -0.2, -4.0,
-        -0.4, -0.7, -4.0,
 
-        0.2, -0.8, -3.0,
-        0.2, -0.3, -3.0,
-        -0.3, -0.8, -3.0,
-
-        0.3, -0.9, -2.0,
-        0.3, -0.4, -2.0,
-        -0.2, -0.9, -2.0,
-    };
-
-    std::vector<float> triangleColors {
-            0.9, 0.1, 0.3, 0.5, // Red
-            0.9, 0.1, 0.3, 0.5, // Red
-            0.9, 0.1, 0.3, 0.5, // Red
-
-            0.1, 0.8, 0.0, 0.5, // Green
-            0.1, 0.8, 0.0, 0.5, // Green
-            0.1, 0.8, 0.0, 0.5, // Green
-
-            0.1, 0.1, 0.9, 0.5, // Blue
-            0.1, 0.1, 0.9, 0.5, // Blue
-            0.1, 0.1, 0.9, 0.5, // Blue
-    };
-    std::vector<unsigned int> triangleIndices;
-    for (unsigned long i = 0; i * NUM_COORDINATES < triangleCoords.size(); ++i) triangleIndices.push_back(i);
-    unsigned int numTrianglePoints = triangleCoords.size() / NUM_COORDINATES;
-    unsigned int triangleVAO = createVAO(triangleCoords, triangleIndices, triangleColors, numTrianglePoints);
-
+    Mesh lunarSurface = loadTerrainMesh("../gloom/src/resources/lunarsurface.obj");
+    unsigned int surfaceVAO = createVAO(
+            lunarSurface.vertices,
+            lunarSurface.indices,
+            lunarSurface.colours,
+            lunarSurface.vertexCount());
     glPointSize(5.0f);
     glLineWidth(5.0f);
 
@@ -125,14 +102,14 @@ void runProgram(GLFWwindow* window)
         glm::mat4 rotateZ = glm::rotate(cam.psi, glm::vec3(0.0f, 0.0f, 1.0f)); // Rotation around z
 
         glm::mat4 transform = rotateX * rotateY * rotateZ * translate;
-        glm::mat4 perspective = glm::perspective(glm::radians(FOV), ASPECT_RATIO, 1.0f, 100.0f);
+        glm::mat4 perspective = glm::perspective(glm::radians(FOV), ASPECT_RATIO, 1.0f, 1000.0f);
         glm::mat4 t_mat = perspective * transform;
         shader.activate();
 
         glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, glm::value_ptr(t_mat));
 
-        glBindVertexArray(triangleVAO);
-        glDrawElements(GL_TRIANGLES, numTrianglePoints, GL_UNSIGNED_INT, nullptr);
+        glBindVertexArray(surfaceVAO);
+        glDrawElements(GL_TRIANGLES, lunarSurface.vertexCount(), GL_UNSIGNED_INT, nullptr);
 
         shader.deactivate();
         printGLError();
