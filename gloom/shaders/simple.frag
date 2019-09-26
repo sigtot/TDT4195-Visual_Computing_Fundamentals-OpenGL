@@ -1,6 +1,7 @@
 #version 450 core
 
 in vec4 ex_color;
+in vec3 ex_normal;
 out vec4 color;
 
 // Author https://gist.github.com/yiwenl
