@@ -14,5 +14,6 @@ vec3 hsv2rgb(vec3 c)
 
 void main()
 {
-    color = vec4(ex_normal, 1.0f);
+    vec3 lightDir = normalize(vec3(0.8, -0.5, 0.6));
+    color = vec4(vec3(1,1,1) * max(0, dot(ex_normal, -lightDir)), 1.0f);
 }
