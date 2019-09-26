@@ -15,8 +15,11 @@
 #define NUM_COLOR_COORDINATES 4
 #define FOV 40.0f
 #define ASPECT_RATIO (16.0f/9.0f)
-#define TRANS_SPEED 0.5f
+#define TRANS_SPEED 5.0f
 #define ROT_SPEED 0.03f
+
+#define Z_FAR_PLANE 10000.0f
+#define Z_NEAR_PLANE 1.0f
 
 unsigned int createVAO(
         std::vector<float> vertices,
@@ -72,7 +75,7 @@ void runProgram(GLFWwindow* window)
     glEnable(GL_CULL_FACE);
 
     // Set default colour after clearing the colour buffer
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
     // Enable transparency
     glEnable(GL_BLEND);
@@ -112,7 +115,7 @@ void runProgram(GLFWwindow* window)
         glm::mat4 rotateZ = glm::rotate(cam.psi, glm::vec3(0.0f, 0.0f, 1.0f)); // Rotation around z
 
         glm::mat4 transform = rotateX * rotateY * rotateZ * translate;
-        glm::mat4 perspective = glm::perspective(glm::radians(FOV), ASPECT_RATIO, 1.0f, 1000.0f);
+        glm::mat4 perspective = glm::perspective(glm::radians(FOV), ASPECT_RATIO, Z_NEAR_PLANE, Z_FAR_PLANE);
         glm::mat4 t_mat = perspective * transform;
         shader.activate();
 
