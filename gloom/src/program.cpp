@@ -9,6 +9,7 @@
 #include <glm/gtx/transform.hpp>
 #include "lib/mesh.hpp"
 #include "lib/OBJLoader.hpp"
+#include "lib/sceneGraph.hpp"
 
 
 #define NUM_COORDINATES 3
@@ -65,6 +66,60 @@ unsigned int createVAO(
     return VAO;
 }
 
+unsigned int VAOFromMesh(Mesh mesh)
+{
+    return createVAO(
+        mesh.vertices,
+        mesh.indices,
+        mesh.colours,
+        mesh.normals,
+        mesh.vertexCount());
+}
+
+SceneNode* createSceneGraph()
+{
+    Helicopter heli = loadHelicopterModel("../gloom/src/resources/helicopter.obj");
+    SceneNode* heliNode = createSceneNode();
+    heliNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.body));
+    heliNode->VAOIndexCount = heli.body.indices.size();
+
+    SceneNode* doorNode = createSceneNode();
+    doorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.door));
+    doorNode->VAOIndexCount = heli.door.indices.size();
+
+    SceneNode* tailRotorNode = createSceneNode();
+    tailRotorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.tailRotor));
+    tailRotorNode->VAOIndexCount = heli.tailRotor.indices.size();
+
+    SceneNode* mainRotorNode = createSceneNode();
+    mainRotorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.mainRotor));
+    mainRotorNode->VAOIndexCount = heli.mainRotor.indices.size();
+
+    Mesh lunarSurface = loadTerrainMesh("../gloom/src/resources/lunarsurface.obj");
+    SceneNode* terrainNode = createSceneNode();
+    terrainNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(lunarSurface));
+    terrainNode->VAOIndexCount = lunarSurface.indices.size();
+
+    SceneNode* rootNode = createSceneNode();
+
+    heliNode->children = {doorNode, tailRotorNode, mainRotorNode};
+    terrainNode->children = {heliNode};
+    rootNode->children = {terrainNode};
+    return rootNode;
+}
+
+void drawSceneGraph(SceneNode* sceneNode)
+{
+    if (sceneNode->vertexArrayObjectID != -1) {
+        glBindVertexArray(sceneNode->vertexArrayObjectID);
+        glDrawElements(GL_TRIANGLES, sceneNode->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+    }
+
+    for (SceneNode* childNode : sceneNode->children) {
+        drawSceneGraph(childNode);
+    }
+}
+
 void runProgram(GLFWwindow* window)
 {
     // Enable depth (Z) buffer (GL_LESS = accept "closest" fragment)
@@ -87,42 +142,7 @@ void runProgram(GLFWwindow* window)
     shader.makeBasicShader("../gloom/shaders/simple.vert",
                            "../gloom/shaders/simple.frag");
 
-    Mesh lunarSurface = loadTerrainMesh("../gloom/src/resources/lunarsurface.obj");
-    unsigned int surfaceVAO = createVAO(
-            lunarSurface.vertices,
-            lunarSurface.indices,
-            lunarSurface.colours,
-            lunarSurface.normals,
-            lunarSurface.vertexCount());
-
-    Helicopter heli = loadHelicopterModel("../gloom/src/resources/helicopter.obj");
-    unsigned int bodyVAO = createVAO(
-            heli.body.vertices,
-            heli.body.indices,
-            heli.body.colours,
-            heli.body.normals,
-            heli.body.vertexCount());
-
-    unsigned int mainRotorVAO = createVAO(
-            heli.mainRotor.vertices,
-            heli.mainRotor.indices,
-            heli.mainRotor.colours,
-            heli.mainRotor.normals,
-            heli.mainRotor.vertexCount());
-
-    unsigned int tailRotorVAO = createVAO(
-            heli.tailRotor.vertices,
-            heli.tailRotor.indices,
-            heli.tailRotor.colours,
-            heli.tailRotor.normals,
-            heli.tailRotor.vertexCount());
-
-    unsigned int doorVAO = createVAO(
-            heli.door.vertices,
-            heli.door.indices,
-            heli.door.colours,
-            heli.door.normals,
-            heli.door.vertexCount());
+    SceneNode* sceneGraph = createSceneGraph();
 
     glPointSize(5.0f);
     glLineWidth(5.0f);
@@ -151,20 +171,7 @@ void runProgram(GLFWwindow* window)
 
         glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, glm::value_ptr(t_mat));
 
-        glBindVertexArray(surfaceVAO);
-        glDrawElements(GL_TRIANGLES, lunarSurface.vertexCount(), GL_UNSIGNED_INT, nullptr);
-
-        glBindVertexArray(bodyVAO);
-        glDrawElements(GL_TRIANGLES, heli.body.vertexCount(), GL_UNSIGNED_INT, nullptr);
-
-        glBindVertexArray(mainRotorVAO);
-        glDrawElements(GL_TRIANGLES, heli.mainRotor.vertexCount(), GL_UNSIGNED_INT, nullptr);
-
-        glBindVertexArray(tailRotorVAO);
-        glDrawElements(GL_TRIANGLES, heli.tailRotor.vertexCount(), GL_UNSIGNED_INT, nullptr);
-
-        glBindVertexArray(doorVAO);
-        glDrawElements(GL_TRIANGLES, heli.door.vertexCount(), GL_UNSIGNED_INT, nullptr);
+        drawSceneGraph(sceneGraph);
 
         shader.deactivate();
         printGLError();
