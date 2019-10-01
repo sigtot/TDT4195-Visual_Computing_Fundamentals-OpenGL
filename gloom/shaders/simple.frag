@@ -1,7 +1,7 @@
 #version 450 core
 
-in vec4 ex_color;
-in vec3 ex_normal;
+in layout(location=1) vec4 ex_color;
+in layout(location=2) vec3 ex_normal;
 out vec4 color;
 
 // Author https://gist.github.com/yiwenl
