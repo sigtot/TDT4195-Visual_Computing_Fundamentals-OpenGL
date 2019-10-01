@@ -154,17 +154,17 @@ void runProgram(GLFWwindow* window)
         glBindVertexArray(surfaceVAO);
         glDrawElements(GL_TRIANGLES, lunarSurface.vertexCount(), GL_UNSIGNED_INT, nullptr);
 
-        glDrawElements(GL_TRIANGLES, heli.body.vertexCount(), GL_UNSIGNED_INT, nullptr);
         glBindVertexArray(bodyVAO);
+        glDrawElements(GL_TRIANGLES, heli.body.vertexCount(), GL_UNSIGNED_INT, nullptr);
 
-        glDrawElements(GL_TRIANGLES, heli.mainRotor.vertexCount(), GL_UNSIGNED_INT, nullptr);
         glBindVertexArray(mainRotorVAO);
+        glDrawElements(GL_TRIANGLES, heli.mainRotor.vertexCount(), GL_UNSIGNED_INT, nullptr);
 
-        glDrawElements(GL_TRIANGLES, heli.tailRotor.vertexCount(), GL_UNSIGNED_INT, nullptr);
         glBindVertexArray(tailRotorVAO);
+        glDrawElements(GL_TRIANGLES, heli.tailRotor.vertexCount(), GL_UNSIGNED_INT, nullptr);
 
-        glDrawElements(GL_TRIANGLES, heli.door.vertexCount(), GL_UNSIGNED_INT, nullptr);
         glBindVertexArray(doorVAO);
+        glDrawElements(GL_TRIANGLES, heli.door.vertexCount(), GL_UNSIGNED_INT, nullptr);
 
         shader.deactivate();
         printGLError();
