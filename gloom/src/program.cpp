@@ -90,6 +90,7 @@ SceneNode* createSceneGraph()
     SceneNode* tailRotorNode = createSceneNode();
     tailRotorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.tailRotor));
     tailRotorNode->VAOIndexCount = heli.tailRotor.indices.size();
+    tailRotorNode->referencePoint = glm::vec3(0.35f, 2.3f, 10.4f);
 
     SceneNode* mainRotorNode = createSceneNode();
     mainRotorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.mainRotor));
@@ -108,15 +109,41 @@ SceneNode* createSceneGraph()
     return rootNode;
 }
 
-void drawSceneGraph(SceneNode* sceneNode)
+glm::mat4 rotateAroundPoint(glm::vec3 rot, glm::vec3 referencePoint)
 {
+    glm::mat4 identity = glm::mat4(1.0f);
+    glm::mat4 translateFromRef = glm::translate(identity, referencePoint);
+    glm::mat4 rotateX = glm::rotate(rot.x, glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 rotateY = glm::rotate(rot.y, glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::mat4 rotateZ = glm::rotate(rot.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat4 translateToRef = glm::translate(identity, -referencePoint);
+
+    return translateFromRef * rotateZ * rotateY * rotateX * translateToRef;
+}
+
+void updateSceneNode(SceneNode* sceneNode, glm::mat4 transformationThusFar)
+{
+    sceneNode->currentTransformationMatrix =
+            transformationThusFar
+            * glm::translate(sceneNode->position)
+            * rotateAroundPoint(sceneNode->rotation, sceneNode->referencePoint);
+
+    for (SceneNode* childNode : sceneNode->children) {
+        updateSceneNode(childNode, sceneNode->currentTransformationMatrix);
+    }
+}
+
+void drawSceneGraph(SceneNode* sceneNode, glm::mat4 viewProjection, GLint tMatUniformLoc)
+{
+    glm::mat4 tMat = viewProjection * sceneNode->currentTransformationMatrix;
     if (sceneNode->vertexArrayObjectID != -1) {
+        glUniformMatrix4fv(tMatUniformLoc, 1, GL_FALSE, glm::value_ptr(tMat));
         glBindVertexArray(sceneNode->vertexArrayObjectID);
         glDrawElements(GL_TRIANGLES, sceneNode->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
     }
 
     for (SceneNode* childNode : sceneNode->children) {
-        drawSceneGraph(childNode);
+        drawSceneGraph(childNode, viewProjection, tMatUniformLoc);
     }
 }
 
@@ -166,12 +193,11 @@ void runProgram(GLFWwindow* window)
 
         glm::mat4 transform = rotateX * rotateY * rotateZ * translate;
         glm::mat4 perspective = glm::perspective(glm::radians(FOV), ASPECT_RATIO, Z_NEAR_PLANE, Z_FAR_PLANE);
-        glm::mat4 t_mat = perspective * transform;
+        glm::mat4 tMat = perspective * transform;
         shader.activate();
 
-        glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, glm::value_ptr(t_mat));
-
-        drawSceneGraph(sceneGraph);
+        updateSceneNode(sceneGraph, glm::mat4(1.0f));
+        drawSceneGraph(sceneGraph, tMat, uniformLoc);
 
         shader.deactivate();
         printGLError();
