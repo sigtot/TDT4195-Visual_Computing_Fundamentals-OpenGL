@@ -28,8 +28,9 @@
 
 typedef struct AnimatedNode
 {
-    SceneNode* rootNode;
-    void (*update)(SceneNode* rootNode, double elapsedTime);
+    SceneNode* sceneNode;
+    double time;
+    void (*update)(AnimatedNode node, double addedTime);
 } AnimatedNode;
 
 void spinEntity(SceneNode* rootNode, float speed, double elapsedTime, bool aboutX)
@@ -42,14 +43,22 @@ void spinEntity(SceneNode* rootNode, float speed, double elapsedTime, bool about
     }
 }
 
-void spinMainRotor(SceneNode* rotorNode, double elapsedTime)
+void spinMainRotor(AnimatedNode node, double elapsedTime)
 {
-    spinEntity(rotorNode, MAIN_ROTOR_SPEED, elapsedTime, true);
+    spinEntity(node.sceneNode, MAIN_ROTOR_SPEED, elapsedTime, true);
 }
 
-void spinTailRotor(SceneNode* rotorNode, double elapsedTime)
+void spinTailRotor(AnimatedNode node, double elapsedTime)
 {
-    spinEntity(rotorNode, TAIL_ROTOR_SPEED, elapsedTime, false);
+    spinEntity(node.sceneNode, TAIL_ROTOR_SPEED, elapsedTime, false);
+}
+
+void heliFlyFigureEight(AnimatedNode node, double elapsedTime)
+{
+    Heading heading = simpleHeadingAnimation(node.time);
+    node.sceneNode->position.x = heading.x;
+    node.sceneNode->position.z = heading.z;
+    node.sceneNode->rotation = glm::vec3(heading.yaw, heading.pitch, heading.roll);
 }
 
 unsigned int createVAO(
@@ -137,10 +146,12 @@ void createSceneGraph(SceneNode *&rootNode, std::vector<AnimatedNode> &animated)
     terrainNode->children = {heliNode};
     rootNode->children = {terrainNode};
 
-    AnimatedNode mainRotorAnimatedNode = AnimatedNode{mainRotorNode, spinMainRotor};
-    AnimatedNode tailRotorAnimatedNode = AnimatedNode{tailRotorNode, spinTailRotor};
+    AnimatedNode mainRotorAnimatedNode = AnimatedNode{mainRotorNode, 0.0, spinMainRotor};
+    AnimatedNode tailRotorAnimatedNode = AnimatedNode{tailRotorNode, 0.0, spinTailRotor};
+    AnimatedNode heliAnimatedNode = AnimatedNode{heliNode, 0.0, heliFlyFigureEight};
     animated.push_back(mainRotorAnimatedNode);
     animated.push_back(tailRotorAnimatedNode);
+    animated.push_back(heliAnimatedNode);
 }
 
 glm::mat4 rotateAroundPoint(glm::vec3 rot, glm::vec3 referencePoint)
@@ -233,8 +244,9 @@ void runProgram(GLFWwindow* window)
         shader.activate();
 
         double elapsedTime = getTimeDeltaSeconds();
-        for (AnimatedNode node : animatedNodes) {
-            node.update(node.rootNode, elapsedTime);
+        for (AnimatedNode &node : animatedNodes) {
+            node.time += elapsedTime;
+            node.update(node, elapsedTime);
         }
         updateSceneNode(sceneGraph, glm::mat4(1.0f));
         drawSceneGraph(sceneGraph, tMat, uniformLoc);
