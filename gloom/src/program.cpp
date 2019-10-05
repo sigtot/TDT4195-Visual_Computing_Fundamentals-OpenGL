@@ -10,6 +10,7 @@
 #include "lib/mesh.hpp"
 #include "lib/OBJLoader.hpp"
 #include "lib/sceneGraph.hpp"
+#include "lib/toolbox.hpp"
 
 
 #define NUM_COORDINATES 3
@@ -21,6 +22,35 @@
 
 #define Z_FAR_PLANE 10000.0f
 #define Z_NEAR_PLANE 1.0f
+
+#define MAIN_ROTOR_SPEED 20.0f
+#define TAIL_ROTOR_SPEED 5.0f
+
+typedef struct AnimatedNode
+{
+    SceneNode* rootNode;
+    void (*update)(SceneNode* rootNode, double elapsedTime);
+} AnimatedNode;
+
+void spinEntity(SceneNode* rootNode, float speed, double elapsedTime, bool aboutX)
+{
+    float step = speed * static_cast<float>(elapsedTime);
+    if (aboutX) {
+        rootNode->rotation.x += step;
+    } else {
+        rootNode->rotation.y += step;
+    }
+}
+
+void spinMainRotor(SceneNode* rotorNode, double elapsedTime)
+{
+    spinEntity(rotorNode, MAIN_ROTOR_SPEED, elapsedTime, true);
+}
+
+void spinTailRotor(SceneNode* rotorNode, double elapsedTime)
+{
+    spinEntity(rotorNode, TAIL_ROTOR_SPEED, elapsedTime, false);
+}
 
 unsigned int createVAO(
         std::vector<float> vertices,
@@ -76,7 +106,7 @@ unsigned int VAOFromMesh(Mesh mesh)
         mesh.vertexCount());
 }
 
-SceneNode* createSceneGraph()
+void createSceneGraph(SceneNode *&rootNode, std::vector<AnimatedNode> &animated)
 {
     Helicopter heli = loadHelicopterModel("../gloom/src/resources/helicopter.obj");
     SceneNode* heliNode = createSceneNode();
@@ -101,12 +131,16 @@ SceneNode* createSceneGraph()
     terrainNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(lunarSurface));
     terrainNode->VAOIndexCount = lunarSurface.indices.size();
 
-    SceneNode* rootNode = createSceneNode();
+    rootNode = createSceneNode();
 
     heliNode->children = {doorNode, tailRotorNode, mainRotorNode};
     terrainNode->children = {heliNode};
     rootNode->children = {terrainNode};
-    return rootNode;
+
+    AnimatedNode mainRotorAnimatedNode = AnimatedNode{mainRotorNode, spinMainRotor};
+    AnimatedNode tailRotorAnimatedNode = AnimatedNode{tailRotorNode, spinTailRotor};
+    animated.push_back(mainRotorAnimatedNode);
+    animated.push_back(tailRotorAnimatedNode);
 }
 
 glm::mat4 rotateAroundPoint(glm::vec3 rot, glm::vec3 referencePoint)
@@ -169,7 +203,9 @@ void runProgram(GLFWwindow* window)
     shader.makeBasicShader("../gloom/shaders/simple.vert",
                            "../gloom/shaders/simple.frag");
 
-    SceneNode* sceneGraph = createSceneGraph();
+    SceneNode* sceneGraph = nullptr;
+    std::vector<AnimatedNode> animatedNodes;
+    createSceneGraph(sceneGraph, animatedNodes);
 
     glPointSize(5.0f);
     glLineWidth(5.0f);
@@ -196,6 +232,10 @@ void runProgram(GLFWwindow* window)
         glm::mat4 tMat = perspective * transform;
         shader.activate();
 
+        double elapsedTime = getTimeDeltaSeconds();
+        for (AnimatedNode node : animatedNodes) {
+            node.update(node.rootNode, elapsedTime);
+        }
         updateSceneNode(sceneGraph, glm::mat4(1.0f));
         drawSceneGraph(sceneGraph, tMat, uniformLoc);
 
