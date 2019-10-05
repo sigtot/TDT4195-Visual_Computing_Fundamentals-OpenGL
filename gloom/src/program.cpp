@@ -26,6 +26,8 @@
 #define MAIN_ROTOR_SPEED 20.0f
 #define TAIL_ROTOR_SPEED 5.0f
 
+#define HELI_TIME_OFFSET 1.6f
+
 typedef struct AnimatedNode
 {
     SceneNode* sceneNode;
@@ -117,41 +119,44 @@ unsigned int VAOFromMesh(Mesh mesh)
 
 void createSceneGraph(SceneNode *&rootNode, std::vector<AnimatedNode> &animated)
 {
-    Helicopter heli = loadHelicopterModel("../gloom/src/resources/helicopter.obj");
-    SceneNode* heliNode = createSceneNode();
-    heliNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.body));
-    heliNode->VAOIndexCount = heli.body.indices.size();
-
-    SceneNode* doorNode = createSceneNode();
-    doorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.door));
-    doorNode->VAOIndexCount = heli.door.indices.size();
-
-    SceneNode* tailRotorNode = createSceneNode();
-    tailRotorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.tailRotor));
-    tailRotorNode->VAOIndexCount = heli.tailRotor.indices.size();
-    tailRotorNode->referencePoint = glm::vec3(0.35f, 2.3f, 10.4f);
-
-    SceneNode* mainRotorNode = createSceneNode();
-    mainRotorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.mainRotor));
-    mainRotorNode->VAOIndexCount = heli.mainRotor.indices.size();
-
     Mesh lunarSurface = loadTerrainMesh("../gloom/src/resources/lunarsurface.obj");
     SceneNode* terrainNode = createSceneNode();
     terrainNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(lunarSurface));
     terrainNode->VAOIndexCount = lunarSurface.indices.size();
 
+    for (int i = 0; i < 5; i++) {
+        Helicopter heli = loadHelicopterModel("../gloom/src/resources/helicopter.obj");
+        SceneNode* heliNode = createSceneNode();
+        heliNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.body));
+        heliNode->VAOIndexCount = heli.body.indices.size();
+
+        SceneNode* doorNode = createSceneNode();
+        doorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.door));
+        doorNode->VAOIndexCount = heli.door.indices.size();
+
+        SceneNode* tailRotorNode = createSceneNode();
+        tailRotorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.tailRotor));
+        tailRotorNode->VAOIndexCount = heli.tailRotor.indices.size();
+        tailRotorNode->referencePoint = glm::vec3(0.35f, 2.3f, 10.4f);
+
+        SceneNode* mainRotorNode = createSceneNode();
+        mainRotorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.mainRotor));
+        mainRotorNode->VAOIndexCount = heli.mainRotor.indices.size();
+
+        heliNode->children = {doorNode, tailRotorNode, mainRotorNode};
+
+        AnimatedNode mainRotorAnimatedNode = AnimatedNode{mainRotorNode, HELI_TIME_OFFSET * static_cast<float>(i), spinMainRotor};
+        AnimatedNode tailRotorAnimatedNode = AnimatedNode{tailRotorNode, HELI_TIME_OFFSET * static_cast<float>(i), spinTailRotor};
+        AnimatedNode heliAnimatedNode = AnimatedNode{heliNode, HELI_TIME_OFFSET * static_cast<float>(i), heliFlyFigureEight};
+        animated.push_back(mainRotorAnimatedNode);
+        animated.push_back(tailRotorAnimatedNode);
+        animated.push_back(heliAnimatedNode);
+
+        terrainNode->children.push_back(heliNode);
+    }
+
     rootNode = createSceneNode();
-
-    heliNode->children = {doorNode, tailRotorNode, mainRotorNode};
-    terrainNode->children = {heliNode};
     rootNode->children = {terrainNode};
-
-    AnimatedNode mainRotorAnimatedNode = AnimatedNode{mainRotorNode, 0.0, spinMainRotor};
-    AnimatedNode tailRotorAnimatedNode = AnimatedNode{tailRotorNode, 0.0, spinTailRotor};
-    AnimatedNode heliAnimatedNode = AnimatedNode{heliNode, 0.0, heliFlyFigureEight};
-    animated.push_back(mainRotorAnimatedNode);
-    animated.push_back(tailRotorAnimatedNode);
-    animated.push_back(heliAnimatedNode);
 }
 
 glm::mat4 rotateAroundPoint(glm::vec3 rot, glm::vec3 referencePoint)
