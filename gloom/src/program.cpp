@@ -158,7 +158,6 @@ void runProgram(GLFWwindow* window)
 {
     // Enable depth (Z) buffer (GL_LESS = accept "closest" fragment)
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS); // This is the default: Can be removed
 
     // Enable face culling
     glEnable(GL_CULL_FACE);
