@@ -183,17 +183,18 @@ void updateSceneNode(SceneNode* sceneNode, glm::mat4 transformationThusFar)
     }
 }
 
-void drawSceneGraph(SceneNode* sceneNode, glm::mat4 viewProjection, GLint tMatUniformLoc)
+void drawSceneGraph(SceneNode* sceneNode, glm::mat4 viewProjection, GLint tMatUniformLoc, GLint modelMatUniformLoc)
 {
     glm::mat4 tMat = viewProjection * sceneNode->currentTransformationMatrix;
     if (sceneNode->vertexArrayObjectID != -1) {
         glUniformMatrix4fv(tMatUniformLoc, 1, GL_FALSE, glm::value_ptr(tMat));
+        glUniformMatrix4fv(modelMatUniformLoc, 1, GL_FALSE, glm::value_ptr(sceneNode->currentTransformationMatrix));
         glBindVertexArray(sceneNode->vertexArrayObjectID);
         glDrawElements(GL_TRIANGLES, sceneNode->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
     }
 
     for (SceneNode* childNode : sceneNode->children) {
-        drawSceneGraph(childNode, viewProjection, tMatUniformLoc);
+        drawSceneGraph(childNode, viewProjection, tMatUniformLoc, modelMatUniformLoc);
     }
 }
 
@@ -226,9 +227,10 @@ void runProgram(GLFWwindow* window)
     glPointSize(5.0f);
     glLineWidth(5.0f);
 
-    GLint uniformLoc = shader.getUniformLocation("t_mat");
-    if (uniformLoc == -1) {
-        throw std::runtime_error("Could not find uniform location");
+    GLint tMatUniformLoc = shader.getUniformLocation("t_mat");
+    GLint modelMatUniformLoc = shader.getUniformLocation("model_mat");
+    if (tMatUniformLoc == -1 || modelMatUniformLoc == -1) {
+        throw std::runtime_error("Could not find uniform locations");
     }
 
     Camera cam = Camera{1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f};
@@ -254,7 +256,7 @@ void runProgram(GLFWwindow* window)
             node.update(node, elapsedTime);
         }
         updateSceneNode(sceneGraph, glm::mat4(1.0f));
-        drawSceneGraph(sceneGraph, tMat, uniformLoc);
+        drawSceneGraph(sceneGraph, tMat, tMatUniformLoc, modelMatUniformLoc);
 
         shader.deactivate();
         printGLError();
