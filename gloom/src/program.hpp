@@ -20,6 +20,13 @@ typedef struct Camera {
     bool chase;
 } Camera;
 
+typedef struct AnimatedNode
+{
+    SceneNode* sceneNode;
+    double time;
+    void (*update)(AnimatedNode node, double addedTime);
+} AnimatedNode;
+
 // Main OpenGL program
 void runProgram(GLFWwindow* window);
 

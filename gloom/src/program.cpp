@@ -27,13 +27,6 @@
 #define CHASE_RADIUS 20.0f
 #define CHASE_SPEED 0.02f
 
-typedef struct AnimatedNode
-{
-    SceneNode* sceneNode;
-    double time;
-    void (*update)(AnimatedNode node, double addedTime);
-} AnimatedNode;
-
 void spinEntity(SceneNode* rootNode, float speed, double elapsedTime, bool aboutX)
 {
     float step = speed * static_cast<float>(elapsedTime);
