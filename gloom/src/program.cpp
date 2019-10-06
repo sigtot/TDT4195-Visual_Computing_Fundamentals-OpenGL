@@ -179,9 +179,6 @@ void runProgram(GLFWwindow* window)
     SceneNode* mainHeli = addHelicopterNode(sceneGraph, animatedNodes);
     mainHeli->position.y = MAIN_HELI_START_HEIGHT;
 
-    glPointSize(5.0f);
-    glLineWidth(5.0f);
-
     GLint tMatUniformLoc = shader.getUniformLocation("t_mat");
     GLint modelMatUniformLoc = shader.getUniformLocation("model_mat");
     if (tMatUniformLoc == -1 || modelMatUniformLoc == -1) {
