@@ -25,6 +25,9 @@
 #define CHASE_RADIUS 20.0f
 #define CHASE_SPEED 0.02f
 
+#define MAIN_HELI_START_HEIGHT 20.0f
+#define FIGURE_EIGHT_HELI_COUNT 5
+
 void spinEntity(SceneNode* rootNode, float speed, double elapsedTime, bool aboutX)
 {
     float step = speed * static_cast<float>(elapsedTime);
@@ -92,8 +95,7 @@ void createSceneGraph(SceneNode *&rootNode, std::vector<AnimatedNode> &animated)
     terrainNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(lunarSurface));
     terrainNode->VAOIndexCount = lunarSurface.indices.size();
 
-    // Add five figure-8 flying helicopters
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < FIGURE_EIGHT_HELI_COUNT; i++) {
         SceneNode * heliNode = addHelicopterNode(terrainNode, animated);
         AnimatedNode heliAnimatedNode = AnimatedNode{heliNode, HELI_TIME_OFFSET * static_cast<float>(i), heliFlyFigureEight};
         animated.push_back(heliAnimatedNode);
@@ -175,7 +177,7 @@ void runProgram(GLFWwindow* window)
     std::vector<AnimatedNode> animatedNodes;
     createSceneGraph(sceneGraph, animatedNodes);
     SceneNode* mainHeli = addHelicopterNode(sceneGraph, animatedNodes);
-    mainHeli->position.y = 20.0f;
+    mainHeli->position.y = MAIN_HELI_START_HEIGHT;
 
     glPointSize(5.0f);
     glLineWidth(5.0f);
