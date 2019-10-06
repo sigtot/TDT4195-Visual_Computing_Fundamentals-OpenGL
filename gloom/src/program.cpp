@@ -28,6 +28,8 @@
 
 #define HELI_TIME_OFFSET 1.6f
 
+#define CHASE_RADIUS 20.0f
+
 typedef struct AnimatedNode
 {
     SceneNode* sceneNode;
@@ -198,6 +200,18 @@ void drawSceneGraph(SceneNode* sceneNode, glm::mat4 viewProjection, GLint tMatUn
     }
 }
 
+float control(float x, float ref, float rad)
+{
+    return 0.01f * (x - glm::sign(x - ref) * rad - ref);
+}
+
+void chase(Camera &cam, const SceneNode *sceneNode)
+{
+    cam.x -= control(cam.x, sceneNode->position.x, CHASE_RADIUS);
+    cam.y -= control(cam.y, sceneNode->position.y, CHASE_RADIUS);
+    cam.z -= control(cam.z, sceneNode->position.z, CHASE_RADIUS);
+}
+
 void runProgram(GLFWwindow* window)
 {
     // Enable depth (Z) buffer (GL_LESS = accept "closest" fragment)
@@ -233,21 +247,27 @@ void runProgram(GLFWwindow* window)
         throw std::runtime_error("Could not find uniform locations");
     }
 
-    Camera cam = Camera{1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f};
+    Camera cam = Camera{1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, false};
     // Rendering Loop
     while (!glfwWindowShouldClose(window)) {
         // Clear colour and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 identity = glm::mat4(1.0f);
-        glm::mat4 translate = glm::translate(identity, glm::vec3(cam.x, cam.y, cam.z));
-        glm::mat4 rotateY = glm::rotate(cam.phi, glm::vec3(0.0f, 1.0f, 0.0f)); // Rotation around y
-        glm::mat4 rotateX = glm::rotate(cam.theta, glm::vec3(1.0f, 0.0f, 0.0f)); // Rotation around x
-        glm::mat4 rotateZ = glm::rotate(cam.psi, glm::vec3(0.0f, 0.0f, 1.0f)); // Rotation around z
+        glm::mat4 viewMatrix;
+        if (cam.chase) {
+            viewMatrix = glm::lookAt(glm::vec3(cam.x, cam.y, cam.z), sceneGraph->children[0]->children[0]->position, glm::vec3(0.0f, 1.0f, 0.0f));
+            chase(cam, sceneGraph->children[0]->children[0]);
+        } else {
+            glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(cam.x, cam.y, cam.z));
+            glm::mat4 rotateY = glm::rotate(cam.phi, glm::vec3(0.0f, 1.0f, 0.0f)); // Rotation around y
+            glm::mat4 rotateX = glm::rotate(cam.theta, glm::vec3(1.0f, 0.0f, 0.0f)); // Rotation around x
+            glm::mat4 rotateZ = glm::rotate(cam.psi, glm::vec3(0.0f, 0.0f, 1.0f)); // Rotation around z
 
-        glm::mat4 transform = rotateX * rotateY * rotateZ * translate;
+            viewMatrix = rotateX * rotateY * rotateZ * translate;
+        }
+
         glm::mat4 perspective = glm::perspective(glm::radians(FOV), ASPECT_RATIO, Z_NEAR_PLANE, Z_FAR_PLANE);
-        glm::mat4 tMat = perspective * transform;
+        glm::mat4 tMat = perspective * viewMatrix;
         shader.activate();
 
         double elapsedTime = getTimeDeltaSeconds();
@@ -345,6 +365,11 @@ void handleKeyboardInput(GLFWwindow* window, Camera &cam)
 
     if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
     {
-        cam = Camera{1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f};
+        cam = Camera{1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, false};
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+    {
+        cam.chase = !cam.chase;
     }
 }

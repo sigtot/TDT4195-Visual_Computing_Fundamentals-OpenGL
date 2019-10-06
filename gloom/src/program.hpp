@@ -16,6 +16,7 @@ typedef struct Camera {
     float phi;
     float theta;
     float psi;
+    bool chase;
 } Camera;
 
 // Main OpenGL program
