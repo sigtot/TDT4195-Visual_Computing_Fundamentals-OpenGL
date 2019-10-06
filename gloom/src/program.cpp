@@ -165,10 +165,6 @@ void runProgram(GLFWwindow* window)
     // Set default colour after clearing the colour buffer
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    // Enable transparency
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     // Set up scene
     Gloom::Shader shader;
     // Fix these dumb paths some time
