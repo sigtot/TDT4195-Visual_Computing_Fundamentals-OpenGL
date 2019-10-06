@@ -4,12 +4,10 @@
 #include <vector>
 #include "program.hpp"
 #include "gloom/gloom.hpp"
-#include <glm/mat4x4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
 #include "lib/mesh.hpp"
 #include "lib/OBJLoader.hpp"
-#include "lib/sceneGraph.hpp"
 #include "lib/toolbox.hpp"
 
 
@@ -29,6 +27,7 @@
 #define HELI_TIME_OFFSET 1.6f
 
 #define CHASE_RADIUS 20.0f
+#define CHASE_SPEED 0.02f
 
 typedef struct AnimatedNode
 {
@@ -119,6 +118,37 @@ unsigned int VAOFromMesh(Mesh mesh)
         mesh.vertexCount());
 }
 
+SceneNode * addHelicopterNode(SceneNode *&parentNode, std::vector<AnimatedNode> &animated)
+{
+    Helicopter heli = loadHelicopterModel("../gloom/src/resources/helicopter.obj");
+    SceneNode* heliNode = createSceneNode();
+    heliNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.body));
+    heliNode->VAOIndexCount = heli.body.indices.size();
+
+    SceneNode* doorNode = createSceneNode();
+    doorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.door));
+    doorNode->VAOIndexCount = heli.door.indices.size();
+
+    SceneNode* tailRotorNode = createSceneNode();
+    tailRotorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.tailRotor));
+    tailRotorNode->VAOIndexCount = heli.tailRotor.indices.size();
+    tailRotorNode->referencePoint = glm::vec3(0.35f, 2.3f, 10.4f);
+
+    SceneNode* mainRotorNode = createSceneNode();
+    mainRotorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.mainRotor));
+    mainRotorNode->VAOIndexCount = heli.mainRotor.indices.size();
+
+    heliNode->children = {doorNode, tailRotorNode, mainRotorNode};
+
+    AnimatedNode mainRotorAnimatedNode = AnimatedNode{mainRotorNode, 0.0f, spinMainRotor};
+    AnimatedNode tailRotorAnimatedNode = AnimatedNode{tailRotorNode, 0.0f, spinTailRotor};
+    animated.push_back(mainRotorAnimatedNode);
+    animated.push_back(tailRotorAnimatedNode);
+
+    parentNode->children.push_back(heliNode);
+
+    return heliNode;
+}
 void createSceneGraph(SceneNode *&rootNode, std::vector<AnimatedNode> &animated)
 {
     Mesh lunarSurface = loadTerrainMesh("../gloom/src/resources/lunarsurface.obj");
@@ -126,35 +156,11 @@ void createSceneGraph(SceneNode *&rootNode, std::vector<AnimatedNode> &animated)
     terrainNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(lunarSurface));
     terrainNode->VAOIndexCount = lunarSurface.indices.size();
 
+    // Add five figure-8 flying helicopters
     for (int i = 0; i < 5; i++) {
-        Helicopter heli = loadHelicopterModel("../gloom/src/resources/helicopter.obj");
-        SceneNode* heliNode = createSceneNode();
-        heliNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.body));
-        heliNode->VAOIndexCount = heli.body.indices.size();
-
-        SceneNode* doorNode = createSceneNode();
-        doorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.door));
-        doorNode->VAOIndexCount = heli.door.indices.size();
-
-        SceneNode* tailRotorNode = createSceneNode();
-        tailRotorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.tailRotor));
-        tailRotorNode->VAOIndexCount = heli.tailRotor.indices.size();
-        tailRotorNode->referencePoint = glm::vec3(0.35f, 2.3f, 10.4f);
-
-        SceneNode* mainRotorNode = createSceneNode();
-        mainRotorNode->vertexArrayObjectID = static_cast<int>(VAOFromMesh(heli.mainRotor));
-        mainRotorNode->VAOIndexCount = heli.mainRotor.indices.size();
-
-        heliNode->children = {doorNode, tailRotorNode, mainRotorNode};
-
-        AnimatedNode mainRotorAnimatedNode = AnimatedNode{mainRotorNode, HELI_TIME_OFFSET * static_cast<float>(i), spinMainRotor};
-        AnimatedNode tailRotorAnimatedNode = AnimatedNode{tailRotorNode, HELI_TIME_OFFSET * static_cast<float>(i), spinTailRotor};
+        SceneNode * heliNode = addHelicopterNode(terrainNode, animated);
         AnimatedNode heliAnimatedNode = AnimatedNode{heliNode, HELI_TIME_OFFSET * static_cast<float>(i), heliFlyFigureEight};
-        animated.push_back(mainRotorAnimatedNode);
-        animated.push_back(tailRotorAnimatedNode);
         animated.push_back(heliAnimatedNode);
-
-        terrainNode->children.push_back(heliNode);
     }
 
     rootNode = createSceneNode();
@@ -202,7 +208,7 @@ void drawSceneGraph(SceneNode* sceneNode, glm::mat4 viewProjection, GLint tMatUn
 
 float control(float x, float ref, float rad)
 {
-    return 0.01f * (x - glm::sign(x - ref) * rad - ref);
+    return CHASE_SPEED * (x - glm::sign(x - ref) * rad - ref);
 }
 
 void chase(Camera &cam, const SceneNode *sceneNode)
@@ -237,6 +243,8 @@ void runProgram(GLFWwindow* window)
     SceneNode* sceneGraph = nullptr;
     std::vector<AnimatedNode> animatedNodes;
     createSceneGraph(sceneGraph, animatedNodes);
+    SceneNode* mainHeli = addHelicopterNode(sceneGraph, animatedNodes);
+    mainHeli->position.y = 20.0f;
 
     glPointSize(5.0f);
     glLineWidth(5.0f);
@@ -255,9 +263,11 @@ void runProgram(GLFWwindow* window)
 
         glm::mat4 viewMatrix;
         if (cam.chase) {
-            viewMatrix = glm::lookAt(glm::vec3(cam.x, cam.y, cam.z), sceneGraph->children[0]->children[0]->position, glm::vec3(0.0f, 1.0f, 0.0f));
-            chase(cam, sceneGraph->children[0]->children[0]);
+            viewMatrix = glm::lookAt(glm::vec3(cam.x, cam.y, cam.z), mainHeli->position, glm::vec3(0.0f, 1.0f, 0.0f));
+            handleInputsHeli(window, mainHeli);
+            chase(cam, mainHeli);
         } else {
+            handleKeyboardInput(window, cam);
             glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(cam.x, cam.y, cam.z));
             glm::mat4 rotateY = glm::rotate(cam.phi, glm::vec3(0.0f, 1.0f, 0.0f)); // Rotation around y
             glm::mat4 rotateX = glm::rotate(cam.theta, glm::vec3(1.0f, 0.0f, 0.0f)); // Rotation around x
@@ -283,12 +293,46 @@ void runProgram(GLFWwindow* window)
 
         // Handle other events
         glfwPollEvents();
-        handleKeyboardInput(window, cam);
 
         // Flip buffers
         glfwSwapBuffers(window);
     }
     shader.destroy();
+}
+
+void handleInputsHeli(GLFWwindow* window, SceneNode* sceneNode)
+{
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+        sceneNode->position.x -= std::sin(sceneNode->rotation.x) * TRANS_SPEED;
+        sceneNode->position.z -= std::cos(sceneNode->rotation.x) * TRANS_SPEED;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        sceneNode->position.x += std::sin(sceneNode->rotation.x) * TRANS_SPEED;
+        sceneNode->position.z += std::cos(sceneNode->rotation.x) * TRANS_SPEED;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+    {
+        sceneNode->position.y -= TRANS_SPEED;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    {
+        sceneNode->position.y += TRANS_SPEED;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+        sceneNode->rotation.x -= ROT_SPEED;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        sceneNode->rotation.x += ROT_SPEED;
+    }
 }
 
 void handleKeyboardInput(GLFWwindow* window, Camera &cam)

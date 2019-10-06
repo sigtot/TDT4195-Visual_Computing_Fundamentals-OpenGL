@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 #include <string>
+#include <lib/sceneGraph.hpp>
 
 
 typedef struct Camera {
@@ -26,6 +27,7 @@ void runProgram(GLFWwindow* window);
 // Function for handling key presses
 void handleKeyboardInput(GLFWwindow* window, Camera &cam);
 
+void handleInputsHeli(GLFWwindow* window, SceneNode* sceneNode);
 
 // Checks for whether an OpenGL error occurred. If one did,
 // it prints out the error type and ID
