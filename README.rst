@@ -1,8 +1,18 @@
-=====
-gloom
-=====
+============================================================
+OpenGL Exercises for TDT4145 – Visual Computing Fundamentals
+============================================================
+The exercises started with drawing simple triangles and this was then gradually built upon to become a fully fledged 3d-rendering engine boasting proper perspective transforms and a scene graph for drawing and animating arbitrary 3d models.
 
-A minimalistic boilerplate for OpenGL with C++ derived from `Glitter`_. Its intended use is to get smaller OpenGL projects quickly up and running for the graphics courses at `NTNU`_.
+
+Reports
+=======
+* `report1`_
+* `report2`_
+* `report3`_
+
+
+Libraries
+=========
 
 The following libraries are included with this project:
 
@@ -39,7 +49,7 @@ The project and all third-party libraries can be downloaded by cloning this repo
 
 .. code-block:: bash
 
-  git clone --recursive https://github.com/senbon/gloom.git
+  git clone --recursive https://github.com/sigtot/TDT4195-Visual_Computing_Fundamentals-OpenGL
 
 If you have already cloned the repository and missed the ``--recursive`` flag, then the following grabs all dependencies.
 
@@ -103,3 +113,6 @@ Among other things, the wiki includes information on how to use the shader and c
 .. _stb: https://github.com/nothings/stb
 .. _CMake: https://cmake.org/
 .. _repository wiki: https://github.com/senbon/gloom/wiki
+.. _report1: https://github.com/sigtot/TDT4195-Visual_Computing_Fundamentals-OpenGL/blob/master/visdat-1-Sigurd.pdf
+.. _report2: https://github.com/sigtot/TDT4195-Visual_Computing_Fundamentals-OpenGL/blob/master/visdat-2-Sigurd.pdf
+.. _report3: https://github.com/sigtot/TDT4195-Visual_Computing_Fundamentals-OpenGL/blob/master/visdat-3-Sigurd.pdf
