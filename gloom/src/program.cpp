@@ -152,7 +152,7 @@ float control(float x, float ref, float rad)
 void chase(Camera &cam, const SceneNode *sceneNode)
 {
     cam.x -= control(cam.x, sceneNode->position.x, CHASE_RADIUS);
-    cam.y -= control(cam.y, sceneNode->position.y, CHASE_RADIUS);
+    cam.y -= CHASE_SPEED * (cam.y - CHASE_RADIUS - sceneNode->position.y);
     cam.z -= control(cam.z, sceneNode->position.z, CHASE_RADIUS);
 }
 
