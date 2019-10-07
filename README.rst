@@ -3,6 +3,7 @@ OpenGL Exercises for TDT4145 – Visual Computing Fundamentals
 ============================================================
 The exercises started with drawing simple triangles and this was then gradually built upon to become a fully fledged 3d-rendering engine boasting proper perspective transforms and a scene graph for drawing and animating arbitrary 3d models.
 
+.. image:: https://github.com/sigtot/TDT4195-Visual_Computing_Fundamentals-OpenGL/blob/master/chopchop.png
 
 Reports
 =======
